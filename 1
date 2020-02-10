@@ -1,0 +1,142 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+string num1;
+string num2;
+int base = 0;
+int convert(string num, int length, int base)
+{
+	int total = 1;
+	int count = 0;
+	int ans = 0;
+
+	for (int a = 0; a < length; a++)
+	{
+		for (int b = a; b < length - 1; b++)
+		{
+			total *= base;
+			count++;
+		}
+
+		if (num[a] >= '0' && num[a] <= '9')
+		{
+			int temp = num[a] - '0';
+			ans += total * temp;
+		}
+
+		else if (num[a] >= 'a' && num[a] <= 'f')
+		{
+			int temp = (num[a] - 'a') + 10;
+			ans += total * temp;
+		}
+		total = 1;
+	}
+	return ans;
+}
+bool invalid(string num, int length, int base)
+{
+	char word[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
+	int count = 0;
+	int check = 0;
+
+	for (int a = 0; a < length; a++)
+	{
+		for (int b = 0; b < base; b++)
+		{
+			if (num[a] == word[b])
+			{
+				count++;
+				break;			
+			}
+
+			else if (num[a] != word[b])
+			{
+				check++;
+				if (check >= base)
+				{
+					cout << "Invalid input!" << endl;
+					return true;
+				}
+			}
+		}
+		check = 0;
+	}
+	
+	if (count == length)
+	{
+		return false;
+	}
+}
+void instruction()
+{
+	cout << "Please enter the base that you wish in the following calculation:";
+	cin >> base;
+	cout << endl;
+	cout << "Please enter number 1:";
+	cin >> num1;
+	cout << endl;
+	cout << "Please enter number 2:";
+	cin >> num2;
+	cout << endl;
+}
+void calculate()
+{
+	int num1_length = num1.length();
+	int num2_length = num2.length();
+
+	if (invalid(num1, num1_length, base) == false && invalid(num2, num2_length, base) == false)
+	{
+		int real1 = convert(num1, num1_length, base);
+		int real2 = convert(num2, num2_length, base);
+		int sum = real1 + real2;
+
+		int ans[36] = { 0 };
+		int count = 0;
+
+		while (sum > 0)
+		{
+			int temp = sum % base;
+			ans[count++] = temp;
+			sum /= base;
+		}
+
+		cout << "Total sum:";
+
+		for (int b = count - 1; b >= 0; b--)
+		{
+			if (ans[b] < 10)
+			{
+				cout << ans[b];
+			}
+
+			if (ans[b] >= 10)
+			{
+				cout << (char)ans[b] - 10 + 'a';
+			}
+		}
+	}
+}
+int main ()
+{
+	instruction();
+	int num1_length = num1.length();
+	int num2_length = num2.length();
+
+	for (int b = 0; b < 10; b++)
+	{
+		if (invalid(num1, num1_length, base) == false && invalid(num2, num2_length, base) == false)
+		{
+			calculate();
+			break;
+		}
+		else
+		{
+			system("cls");
+			instruction();
+		}
+	}
+	
+
+	return 0;
+
+}
