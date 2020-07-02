@@ -1,0 +1,825 @@
+#include<iostream>
+#include<iomanip>
+#include<cstring>
+using namespace std;
+
+bool cVp_pfirst = false; //true = player go first, else = computer go first
+bool cVp = false; //true = computer vs user, else = user vs human friend
+char cVp_ppattern;
+char cVp_cpattern;
+char pVp_pattern1;
+char pVp_pattern2;
+int steps;
+char board[9] = { ' ' }; //to save the places of OX 
+bool occupied[9] = { false };
+unsigned seed;
+int order;
+
+// print out the rules & information of the game + provide the system commands to the user
+int print_choices() {
+
+	cout << "Rules: ";
+	cout << "\n";
+	cout << "1. This is a two-player game, with each player representing a symbol (O or X).";
+	cout << "\n";
+	cout << "2. You can choose if you would like to play with a friend or to play with the computer player.";
+	cout << "\n";
+	cout << "3. The players will be playing on a 3 by 3 game board.";
+	cout << "\n";
+	cout << "4. The players will take turns choosing an empty box in the game board to place their symbol.";
+	cout << "\n";
+	cout << "5. A virtual dice will be thrown to decide the play order of each game.";
+	cout << "\n";
+	cout << "6. The  first player getting 3 of his/her symbols in a row (horixontal, vertical or diagonal) will be the winner.";
+	cout << "\n";
+	cout << "7. The game will be over when all 9 boxes are filled up. If no player has 3 symbols in a row, the game ends in a tie.";
+	cout << "\n";
+	cout << "\n";
+	cout << "Would you like to start now ?";
+	cout << "\n";
+	cout << "0: Exit the System";
+	cout << "\n";
+	cout << "1: Begin entering a new game";
+	cout << "\n";
+	cout << "Select your choice: ";
+	int choice;
+	cin >> choice;
+	return choice;
+
+}
+
+// prints the welcoming message + explain and provide the system commands to the user [including print_choices()]
+int print_main_menu() {
+
+	cout << "Welcome to Tic-Tac-Toe !";
+	cout << "\n";
+	cout << "\n";
+	int choice = print_choices();
+	return choice;
+
+}
+
+// prompt user to choose the game mode
+int print_game_mode() {
+
+	cout << "\n";
+	cout << "Please select a game mode.";
+	cout << "\n";
+	cout << "1: Play with the computer player";
+	cout << "\n";
+	cout << "2: Play with a friend";
+	cout << "\n";
+	cout << "Select your choice: ";
+	int choice2;
+	cin >> choice2;
+	return choice2;
+
+}
+
+// prompt user to choose the game mode (for users choosing computer player)
+int print_game_mode_cp() {
+
+	cout << "\n";
+	cout << "Thank you for choosing the computer player.";
+	cout << "\n";
+	cout << "Please select a game mode.";
+	cout << "\n";
+	cout << "1: Easy Mode";
+	cout << "\n";
+	cout << "2: Advanced Mode";
+	cout << "\n";
+	cout << "Select your choice: ";
+	int choice3;
+	cin >> choice3;
+	return choice3;
+
+}
+
+// prints out the game board that shows the cell ID of each cell
+void print_tictactoe() {
+
+	cout << "Here is what the game board looks like with the IDs of each cell:" << "\n\n";
+	cout << " 1| 2 |3" << "\n";
+	cout << "---------" << "\n";
+	cout << " 4| 5 |6" << "\n";
+	cout << "---------" << "\n";
+	cout << " 7| 8 |9" << "\n\n";
+
+}
+
+// prints out the latest updated game board with cells occupied with symbols for each round 
+void print_playing_tictactoe() {
+
+	for (int a = 0; a < 9; a++) {
+
+		if (occupied[a] == true) {
+
+			cout << board[a];
+
+		}
+
+		else {
+
+			cout << a + 1;
+
+		}
+
+		cout << ((a + 1) % 3 == 0 ? "\n---------\n" : " |");
+
+	}
+
+}
+
+// prints the results of the virtual dice and indicates the players the game order
+void print_dice_result(int num, bool cvp) {
+
+	cout << "\n";
+	cout << "A dice is thrown to decide the player order.";
+	cout << "\n";
+	cout << "\n";
+
+	// X goes first
+	if (num == 1) {
+
+		if (cvp == true) {
+
+			if (cVp_ppattern == 'X') {
+
+				cVp_pfirst = true;
+				cout << "Player ";
+
+			}
+
+			else {
+
+				cout << "Computer ";
+
+			}
+
+		}
+
+		else {
+
+			cout << "Player ";
+
+		}
+
+		cout << "(X) may go first.";
+
+	}
+
+	// O goes first
+	else if (num == 2) {
+
+		if (cvp == true) {
+
+			if (cVp_ppattern == 'O') {
+
+				cVp_pfirst = true;
+				cout << "Player ";
+
+			}
+
+			else {
+
+				cout << "Computer ";
+
+			}
+
+		}
+
+		else {
+
+			cout << "Player ";
+
+		}
+
+		cout << "(O) may go first.";
+
+	}
+
+	cout << "\n";
+	return;
+
+}
+
+// judges if the game has ended 
+bool finish() {
+
+	int n = 0;
+
+	//check horizontal
+	while (n < 9) {
+
+		char temp = board[n];
+		if (temp == 'X' || temp == 'O') {
+			if (board[n + 1] == board[n + 2] && board[n + 1] == temp) {
+				return true;
+			}	
+		}
+
+		
+
+		n += 3;
+
+	}
+
+	n = 0;
+
+	//check vertical 
+	while (n < 3) {
+
+		char temp = board[n];
+		if (temp == 'X' || temp == 'O') {
+			if (board[n + 3] == board[n + 6] && board[n + 3] == temp) {
+				return true;
+			}
+		}
+
+		
+		n++;
+	}
+
+	char temp = board[4];
+	if (temp != 'X' && temp != 'O') {
+		return false;
+	}
+
+	if (board[0] == board[8] && board[0] == temp) {
+		return true;
+	}
+
+	if (board[2] == board[6] && board[2] == temp) {
+		return true;
+	}
+	return false;
+}
+
+// prompt user to enter his/her desired symbol and record the symbols of both players
+void chose_o_or_x(bool cvp) {
+
+	// for user vs computer 
+	if (cvp == true) {
+
+		// prompt user to input X or O
+		cout << "Please enter your symbol: ";
+		cin >> cVp_ppattern;
+
+		// for users not entering 'O' and 'X', repeat prompting them 
+		while (cVp_ppattern != 'O' && cVp_ppattern != 'X') {
+
+			cout << "Invalid input!\n";
+			cout << "Please enter your symbol: ";
+			cin >> cVp_ppattern;
+
+		}
+
+		if (cVp_ppattern == 'O') {
+
+			cVp_cpattern = 'X';
+
+		}
+
+		else {
+
+			cVp_cpattern = 'O';
+
+		}
+
+		return;
+
+	}
+
+	// for user vs human friend 
+	else {
+
+		// prompt user to input X or O
+		cout << "Please enter player 1 symbol: ";
+		cin >> pVp_pattern1;
+
+		// for users not entering 'O' and 'X', repeat prompting them 
+		while (pVp_pattern1 != 'O' && pVp_pattern1 != 'X') {
+
+			cout << "Invalid input!\n";
+			cout << "Please enter player 1 symbol: ";
+			cin >> pVp_pattern1;
+
+		}
+
+
+		if (pVp_pattern1 == 'O') {
+
+			pVp_pattern2 = 'X';
+
+		}
+
+		else {
+
+			pVp_pattern2 = 'O';
+
+		}
+
+		cout << "The symbol for player 2 is " << pVp_pattern2 << endl;
+		return;
+
+	}
+
+}
+
+// the throwing of virtual dice, including [print_dice_result() & print_tictactoe()]
+void decide_who_first() {
+
+	// unix time stamp 
+	seed = time(0);
+
+	// cout << "Current seed is " << seed << endl;       
+
+	// for random generator
+	srand(seed);
+
+	// computer pick its choice  
+	order = rand() % 2 + 1;
+
+	switch (order) {
+
+	case 1://x first
+		print_dice_result(order, cVp);
+		print_tictactoe();
+
+		break;
+
+	case 2:
+
+		print_dice_result(order, cVp);
+		print_tictactoe();
+
+		break;
+
+	}
+
+}
+
+// decide if the input of cell ID is valid or not 
+bool valid_input(int temp) {
+
+	if (temp >= 9 || temp < 0 || occupied[temp] == true) {
+
+		return false;
+
+	}
+
+	return true;
+
+}
+
+// printing of winner
+void print_win(int n) {
+
+	if (n == 1) {
+
+		if (cVp == true) {
+
+			if (cVp_pfirst == true) {
+
+				cout << "Player win!\n";
+
+			}
+
+			else {
+
+				cout << "Computer win!\n";
+
+			}
+
+		}
+
+		else {
+
+			cout << "Player 1 win!\n";
+
+		}
+
+	}
+
+	else if (n == 2) {
+
+		if (cVp == true) {
+
+			if (cVp_pfirst == false) {
+
+				cout << "Player win!\n";
+
+			}
+
+			else {
+
+				cout << "Computer win!\n";
+
+			}
+
+		}
+
+		else {
+
+			cout << "Player 2 win!\n";
+
+		}
+
+	}
+
+}
+
+// prompting the user to enter cell ID
+int choose_cell() {
+
+	int cell; // the variable that saves the ID of user input
+	cout << "Please enter the cell ID for your move: "; // prompt
+	cin >> cell;
+	int temp = cell;
+	temp--;
+
+	while (valid_input(temp) == false) {
+
+		cout << "Invalid input!\n";
+		cout << "Please enter the cell ID for your move: "; //prompt
+		cin >> cell;
+		temp = cell;
+		temp--;
+
+	}
+
+	steps++;
+	occupied[temp] = true;
+	return temp;
+
+}
+
+// the computer's turn for choosing ID (A2)
+int comp_move_hard() {
+
+	for (int a = 0; a < 9; a++) {
+
+		if (occupied[a] == false) {
+
+			occupied[a] = true;
+			steps++;
+			return a;
+
+		}
+
+	}
+
+}
+
+// the computer's turn for choosing ID (AE)
+int comp_move_easy() {
+
+	for (int a = 8; a >= 0; a--) {
+
+		if (occupied[a] == false) {
+
+			occupied[a] = true;
+			steps++;
+			return a;
+
+		}
+
+	}
+
+}
+
+// prints 'draw' when games is a tie
+void draw() {
+
+	cout << "Draw!\n";
+	return;
+
+}
+
+// for user vs computer (easy)
+void player_vs_comp_easy() {
+
+	// player starts the game 
+	if (cVp_pfirst == true) {
+
+		while (finish() == false && steps < 9) {
+
+			int p = choose_cell();
+			board[p] = cVp_ppattern;
+			print_playing_tictactoe();
+
+			if (finish() == true && steps <= 9) {
+
+				print_win(1);
+				return;
+
+			}
+
+			if (finish() == false && steps < 9) {
+
+				int c = comp_move_easy();
+				board[c] = cVp_cpattern;
+				cout << "Computer move " << ++c << endl;
+				print_playing_tictactoe();
+
+			}
+
+
+
+		}
+
+		if (finish() == true && steps <= 9) {
+
+			print_win(2);
+			return;
+
+		}
+
+	}
+
+	if (steps >= 9) {
+
+		draw();
+		return;
+
+	}
+
+	// computer starts the game
+	else {
+
+		while (finish() == false && steps < 9) {
+
+			int c = comp_move_easy();
+			board[c] = cVp_cpattern;
+			cout << "Computer move " << ++c << endl;
+			print_playing_tictactoe();
+
+			if (finish() == true && steps <= 9) {
+
+				print_win(1);
+				return;
+
+			}
+
+			else if (finish() == false && steps < 9) {
+
+				int p = choose_cell();
+				board[p] = cVp_ppattern;
+				print_playing_tictactoe();
+
+			}
+
+
+
+		}
+
+		if (finish() == true && steps <= 9) {
+
+			print_win(2);
+			return;
+
+		}
+
+	}
+
+	if (steps > 9) {
+
+		draw();
+		return;
+
+	}
+
+}
+
+// for user vs computer (hard)
+void player_vs_comp_hard() {
+
+	// player starts the game 
+	if (cVp_pfirst == true) {
+
+		while (finish() == false && steps < 9) {
+
+			int p = choose_cell();
+			board[p] = cVp_ppattern;
+			print_playing_tictactoe();
+
+			if (finish() == true && steps <= 9) {
+
+				print_win(1);
+				return;
+
+			}
+
+			else if (finish() == false && steps < 9) {
+
+				int c = comp_move_hard();
+				board[c] = cVp_cpattern;
+				cout << "Computer move " << ++c << endl;
+				print_playing_tictactoe();
+
+			}
+
+
+
+		}
+
+		if (finish() == true && steps <= 9) {
+
+			print_win(2);
+			return;
+
+		}
+
+	}
+
+	if (steps >= 9) {
+
+		draw();
+		return;
+
+	}
+
+	// computer starts the game
+	else {
+
+		while (finish() == false && steps < 9) {
+
+			int c = comp_move_hard();
+			board[c] = cVp_cpattern;
+			cout << "Computer move " << ++c << endl;
+			print_playing_tictactoe();
+
+			if (finish() == true && steps <= 9) {
+
+				print_win(1);
+				return;
+
+			}
+
+			else if (finish() == false && steps < 9) {
+
+				int p = choose_cell();
+				board[p] = cVp_ppattern;
+				print_playing_tictactoe();
+
+			}
+
+
+
+		}
+
+		if (finish() == true && steps <= 9) {
+
+			print_win(2);
+			return;
+
+		}
+
+	}
+
+	if (steps > 9) {
+
+		draw();
+		return;
+
+	}
+
+}
+
+// for user vs human friend
+void player_vs_player() {
+
+	while (finish() == false && steps < 9) {
+
+		int p1 = choose_cell();
+		board[p1] = pVp_pattern1;
+		print_playing_tictactoe();
+
+		if (finish() == false && steps < 9) {
+
+			int p2 = choose_cell();
+			board[p2] = pVp_pattern2;
+			print_playing_tictactoe();
+
+		}
+
+		else if (finish() == true && steps <= 9) {
+
+			print_win(1);
+			return;
+
+		}
+
+	}
+
+	if (finish() == true && steps <= 9) {
+
+		print_win(2);
+		return;
+
+	}
+
+	if (steps >= 9) {
+
+		draw();
+		return;
+
+	}
+
+}
+
+int main() {
+
+	while (true) {
+
+		memset(board, 0, sizeof(board));
+		memset(occupied, 0, sizeof(occupied));
+		cVp_pfirst = false;//true means player go first, else comp go first
+		cVp = false;//true means com vs ppl, else ppl vs ppl
+		cVp_ppattern = ' ';;//In cVp, p's pattern is
+		cVp_cpattern = ' ';
+		pVp_pattern1 = ' ';
+		pVp_pattern2 = ' ';
+		steps = 0;
+
+		int choice = print_main_menu();
+		system("cls");
+		// for users entering integers other than '0' and '1'
+		while (choice != 1 && choice != 0) {
+
+			cout << "\n";
+			cout << "Invalid choice, Please select again: ";
+			choice = print_choices();
+			system("cls");
+
+		}
+
+		// when the user decides to exit the programme 
+		if (choice == 0) {
+
+			cout << "\n";
+			cout << "Thank you for playing. See you soon !";
+			break;
+
+		}
+
+		int choice2 = 0;
+		// when the user decides to play the game
+		if (choice == 1) {
+
+			choice2 = print_game_mode();
+			system("cls");
+
+			// for users entering integers other than '1' and '2'
+			while (choice2 != 1 && choice2 != 2) {
+
+				cout << "Invalid choice, Please select again: ";
+				choice2 = print_game_mode();
+				system("cls");
+
+			}
+
+			// for users choosing to play with the computer player
+			int choice3 = 0;
+			if (choice2 == 1) {
+
+				choice3 = print_game_mode_cp();
+				system("cls");
+
+				// choosing easy mode
+				if (choice3 == 1) {
+
+					cVp = true;
+					chose_o_or_x(cVp);
+					decide_who_first();
+					player_vs_comp_easy();
+
+				}
+
+				// choosing advanced mode
+				if (choice3 == 2) {
+
+					cVp = true;
+					chose_o_or_x(cVp);
+					decide_who_first();
+					player_vs_comp_hard();
+
+				}
+
+			}
+
+			// for users choosing to play with a human friend
+			if (choice2 == 2) {
+
+				cVp = false;
+				chose_o_or_x(cVp);
+				decide_who_first();
+				player_vs_player();
+
+			}
+
+		}
+
+	}
+
+}
